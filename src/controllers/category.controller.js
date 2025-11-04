@@ -17,7 +17,7 @@ export const create = async (req, res) => {
     );
 
     if (existing.length > 0) {
-      return res.status(409).json({ message: "Category name already exists for this user." });
+      return res.status(422).json({ message: "Category name already exists for this user." });
     }
 
     await db.query(
@@ -119,7 +119,6 @@ export const update = async (req, res) => {
     };
 
     return res.status(200).json(decorateCategory(updatedCategory));
-
   } catch (error) {
     return res.status(500).json({ message: 'Error updating category' });
   }
