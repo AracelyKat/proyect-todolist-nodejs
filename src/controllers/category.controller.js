@@ -33,7 +33,7 @@ export const create = async (req, res) => {
   }
 };
 
-export const list = async (req, res) => {
+export const index = async (req, res) => {
   const { user_id } = req.query;
 
   if (!user_id) {
@@ -53,7 +53,7 @@ export const list = async (req, res) => {
   }
 };
 
-export const retrieve = async (req, res) => {
+export const show = async (req, res) => {
   const { id } = req.params;
   const { user_id } = req.query;
 
@@ -112,7 +112,7 @@ export const update = async (req, res) => {
   }
 };
 
-export const remove = async (req, res) => {
+export const destroy = async (req, res) => {
   const { id } = req.params;
   const { user_id } = req.body;
 
