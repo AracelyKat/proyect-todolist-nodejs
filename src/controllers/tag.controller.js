@@ -9,11 +9,19 @@ export const create = async (req, res) => {
   try {
     const id = uuidv4();
     const [existing] = await db.query("SELECT id FROM tags WHERE name = ? AND user_id = ?", [name, user_id]);
-    if (existing.length > 0) return res.status(409).json({ message: "Tag name already exists for this user." });
+    if (existing.length > 0) return res.status(422).json({ message: "Tag name already exists for this user." });
 
     await db.query("INSERT INTO tags (id, name, user_id) VALUES (?, ?, ?)", [id, name, user_id]);
-    const [rows] = await db.query("SELECT * FROM tags WHERE id = ?", [id]);
-    return res.status(201).json(decorateTag(rows[0]));
+
+    const now = new Date();
+    const newTag = {
+      id: id,
+      name: name,
+      created_at: now,
+      updated_at: now
+    };
+
+    return res.status(201).json(decorateTag(newTag));
   } catch (error) {
     return res.status(500).json({ message: 'Error creating tag' });
   }
@@ -52,16 +60,22 @@ export const update = async (req, res) => {
 
   try {
     const [existing] = await db.query(
-        "SELECT id FROM tags WHERE name = ? AND user_id = ? AND id != ?",
-        [name, user_id, id]
+      "SELECT id FROM tags WHERE name = ? AND user_id = ? AND id != ?",
+      [name, user_id, id]
     );
-    if (existing.length > 0) return res.status(409).json({ message: "Another tag with that name already exists for this user." });
+    if (existing.length > 0) return res.status(422).json({ message: "Another tag with that name already exists for this user." });
 
     const [result] = await db.query("UPDATE tags SET name = ? WHERE id = ? AND user_id = ?", [name, id, user_id]);
     if (result.affectedRows === 0) return res.status(404).json({ message: 'Tag not found or does not belong to user.' });
 
-    const [rows] = await db.query("SELECT * FROM tags WHERE id = ?", [id]);
-    return res.status(200).json(decorateTag(rows[0]));
+    const updatedTag = {
+      id: id,
+      name: name,
+      updated_at: new Date(),
+      created_at: null
+    };
+
+    return res.status(200).json(decorateTag(updatedTag));
   } catch (error) {
     return res.status(500).json({ message: 'Error updating tag' });
   }
