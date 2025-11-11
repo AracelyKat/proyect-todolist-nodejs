@@ -25,8 +25,15 @@ export const create = async (req, res) => {
       [id, name, user_id]
     );
 
-    const [rows] = await db.query("SELECT * FROM categories WHERE id = ?", [id]);
-    return res.status(201).json(decorateCategory(rows[0]));
+    const now = new Date();
+    const newCategory = {
+      id: id,
+      name: name,
+      created_at: now,
+      updated_at: now
+    };
+
+    return res.status(201).json(decorateCategory(newCategory));
 
   } catch (error) {
     return res.status(500).json({ message: 'Error creating category' });
@@ -88,11 +95,11 @@ export const update = async (req, res) => {
 
   try {
     const [existing] = await db.query(
-        "SELECT id FROM categories WHERE name = ? AND user_id = ? AND id != ?",
-        [name, user_id, id]
+      "SELECT id FROM categories WHERE name = ? AND user_id = ? AND id != ?",
+      [name, user_id, id]
     );
     if (existing.length > 0) {
-        return res.status(409).json({ message: "Another category with that name already exists for this user." });
+      return res.status(422).json({ message: "Another category with that name already exists for this user." });
     }
 
     const [result] = await db.query(
@@ -104,8 +111,14 @@ export const update = async (req, res) => {
       return res.status(404).json({ message: 'Category not found or does not belong to user.' });
     }
 
-    const [rows] = await db.query("SELECT * FROM categories WHERE id = ?", [id]);
-    return res.status(200).json(decorateCategory(rows[0]));
+    const updatedCategory = {
+      id: id,
+      name: name,
+      updated_at: new Date(),
+      created_at: null
+    };
+
+    return res.status(200).json(decorateCategory(updatedCategory));
 
   } catch (error) {
     return res.status(500).json({ message: 'Error updating category' });
