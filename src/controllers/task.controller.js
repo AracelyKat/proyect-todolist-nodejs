@@ -115,6 +115,7 @@ export const show = async (req, res) => {
 export const update = async (req, res) => {
   const { id } = req.params;
   const { title, description, status, category_id, tags, user_id } = req.body;
+
   const connection = await db.getConnection();
 
   try {
