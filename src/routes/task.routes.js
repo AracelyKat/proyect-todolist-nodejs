@@ -1,16 +1,12 @@
-import { decorateTagList } from "./tag.decorator.js";
-import { decorateCategory } from "./category.decorator.js";
+import express from "express";
+import { create, index, show, update, destroy } from "../controllers/task.controller.js";
 
-export const decorateTask = (task, tags = [], category = null) => {
-    return {
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        status: task.status,
-        user_id: task.user_id,
-        createdAt: task.created_at,
-        updatedAt: task.updated_at,
-        tags: decorateTagList(tags),
-        category: category ? decorateCategory(category) : null,
-    };
-};
+const router = express.Router();
+
+router.post("/", create);
+router.get("/", index);
+router.get("/:id", show);
+router.put("/:id", update);
+router.delete("/:id", destroy);
+
+export default router;
