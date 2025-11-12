@@ -21,7 +21,7 @@ export const create = async (req, res) => {
       updated_at: now
     };
 
-    return res.status(201).json(decorateTag(newTag));
+    return res.status(201).json({data:decorateTag(newTag)});
   } catch (error) {
     return res.status(500).json({ message: 'Error creating tag' });
   }
@@ -33,7 +33,7 @@ export const index = async (req, res) => {
 
   try {
     const [rows] = await db.query("SELECT * FROM tags WHERE user_id = ? ORDER BY name ASC", [user_id]);
-    return res.status(200).json(decorateTagList(rows));
+    return res.status(200).json({data:decorateTagList(rows)});
   } catch (error) {
     return res.status(500).json({ message: 'Error listing tags' });
   }
@@ -47,7 +47,7 @@ export const show = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM tags WHERE id = ? AND user_id = ?", [id, user_id]);
     if (rows.length === 0) return res.status(404).json({ message: 'Tag not found or does not belong to user.' });
-    return res.status(200).json(decorateTag(rows[0]));
+    return res.status(200).json({data:decorateTag(rows[0])});
   } catch (error) {
     return res.status(500).json({ message: 'Error retrieving tag' });
   }
@@ -75,7 +75,7 @@ export const update = async (req, res) => {
       created_at: null
     };
 
-    return res.status(200).json(decorateTag(updatedTag));
+    return res.status(200).json({data:decorateTag(updatedTag)});
   } catch (error) {
     return res.status(500).json({ message: 'Error updating tag' });
   }
@@ -87,11 +87,16 @@ export const destroy = async (req, res) => {
   if (!user_id) return res.status(422).json({ message: 'user_id is required in body' });
 
   try {
-    const [result] = await db.query("DELETE FROM tags WHERE id = ? AND user_id = ?", [id, user_id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: 'Tag not found or does not belong to user.' });
-
-    return res.status(204).send();
+    const [tag] = await db.query('SELECT * FROM tags WHERE id = ? AND user_id = ?', [id, user_id]);
+    if (tag.length === 0) {
+            return res.status(404).json({ message: 'tag not found' });
+        }
+    await db.query("DELETE FROM tags WHERE id = ? AND user_id = ?", [id, user_id]);
+    const [backupTag] = tag
+    
+    res.status(200).json({ data: decorateTag(backupTag) });
   } catch (error) {
     return res.status(500).json({ message: 'Error deleting tag' });
   }
+
 };
