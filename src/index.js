@@ -4,6 +4,7 @@ import userRoutes from "./routes/user.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import tagRoutes from "./routes/tag.routes.js";
 import taskRoutes from "./routes/task.routes.js";
+dotenv.config({ path: '.env.example' });
 
 dotenv.config();
 const app = express();
