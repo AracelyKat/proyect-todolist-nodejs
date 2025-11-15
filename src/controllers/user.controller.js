@@ -3,8 +3,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 
-
-
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -29,7 +27,7 @@ export const register = async (req, res) => {
     const token = jwt.sign(
       { id, email },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
+      { expiresIn: process.env.JWT_EXPIRES_IN || 86400 }
     );
 
     return res.status(201).json({
@@ -39,12 +37,9 @@ export const register = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error al registrar usuario:", error);
     return res.status(500).json({ message: "Error del servidor." });
   }
 };
-
-
 
 export const login = async (req, res) => {
   try {
@@ -56,7 +51,7 @@ export const login = async (req, res) => {
 
     const [users] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
     if (users.length === 0) {
-      return res.status(404).json({ message: "Credenciales inválidas." });
+      return res.status(401).json({ message: "Credenciales inválidas." });
     }
 
     const user = users[0];
@@ -69,7 +64,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
+      { expiresIn: process.env.JWT_EXPIRES_IN || 86400 }
     );
 
     return res.status(200).json({
@@ -79,7 +74,6 @@ export const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error al iniciar sesión:", error);
     return res.status(500).json({ message: "Error del servidor." });
   }
 };
