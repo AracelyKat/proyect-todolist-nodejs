@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import { db } from "../db/connection.js";
 
 export const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers["authorization"];
@@ -18,15 +17,7 @@ export const authMiddleware = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const [userRows] = await db.query(
-            "SELECT id, name, email FROM users WHERE id = ?",
-            [decoded.id]
-        );
-
-        if (userRows.length === 0) {
-            return res.status(404).json({ message: "Usuario no encontrado." });
-        }
-        req.user = userRows[0];
+        req.user = decoded;
         next();
 
     } catch (error) {
