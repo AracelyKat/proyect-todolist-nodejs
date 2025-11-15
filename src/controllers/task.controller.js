@@ -3,17 +3,15 @@ import { v4 as uuidv4 } from "uuid";
 import { decorateTask } from "../decorators/task.decorator.js";
 
 export const create = async (req, res) => {
-  const { title, description, status, category_id, tags = [], user_id } = req.body;
+  const { title, description, status, category_id, tags = [] } = req.body;
+  const { id: user_id } = req.user;
 
-  if (!title || !user_id) {
-    return res.status(422).json({ message: "Title and user_id are required" });
+  if (!title) {
+    return res.status(422).json({ message: "Title is required" });
   }
 
   const connection = await db.getConnection();
   try {
-    const [[user]] = await connection.query("SELECT id FROM users WHERE id = ?", [user_id]);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
     let categoryRow = null;
     if (category_id) {
       const [[category]] = await connection.query(
@@ -57,9 +55,8 @@ export const create = async (req, res) => {
 };
 
 export const index = async (req, res) => {
-  const { user_id, category_id, status, tag_id } = req.query;
-
-  if (!user_id) return res.status(422).json({ message: "user_id is required" });
+  const { category_id, status, tag_id } = req.query;
+  const { id: user_id } = req.user;
 
   try {
     let query = "SELECT * FROM tasks WHERE user_id=?";
@@ -114,9 +111,7 @@ export const index = async (req, res) => {
 
 export const show = async (req, res) => {
   const { id } = req.params;
-  const { user_id } = req.query;
-
-  if (!user_id) return res.status(422).json({ message: "user_id is required" });
+  const { id: user_id } = req.query;
 
   try {
     const [[task]] = await db.query("SELECT * FROM tasks WHERE id=? AND user_id=?", [id, user_id]);
@@ -140,9 +135,8 @@ export const show = async (req, res) => {
 
 export const update = async (req, res) => {
   const { id } = req.params;
-  const { title, description, status, category_id, tags = [], user_id } = req.body;
-
-  if (!user_id) return res.status(422).json({ message: "user_id is required" });
+  const { title, description, status, category_id, tags = [] } = req.body;
+  const { id: user_id } = req.user;
 
   const connection = await db.getConnection();
   try {
@@ -189,9 +183,7 @@ export const update = async (req, res) => {
 
 export const destroy = async (req, res) => {
   const { id } = req.params;
-  const { user_id } = req.body;
-
-  if (!user_id) return res.status(422).json({ message: "user_id is required" });
+  const { id: user_id } = req.body;
 
   const connection = await db.getConnection();
   try {
