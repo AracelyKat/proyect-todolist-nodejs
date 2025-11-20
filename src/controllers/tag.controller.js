@@ -32,9 +32,25 @@ export const index = async (req, res) => {
   const { id: user_id } = req.user;
 
   try {
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.per_page) || 10;
+    const offset = (page - 1) * perPage;
+    const [[{ total }]] = await db.query(
+      'SELECT COUNT(*) AS total FROM tags WHERE user_id = ?',
+      [req.user.id]
+    );
     const [rows] = await db.query("SELECT * FROM tags WHERE user_id = ? ORDER BY name ASC", [user_id]);
-    return res.status(200).json({ data: decorateTagList(rows) });
+    res.status(200).json({
+      data: {
+        data: decorateTagList(rows),
+        total,
+        per_page: perPage,
+        current_page: page,
+        last_page: Math.ceil(total / perPage)
+      }
+    });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ message: 'Error listing tags' });
   }
 };
@@ -93,7 +109,7 @@ export const destroy = async (req, res) => {
     await db.query("DELETE FROM tags WHERE id = ? AND user_id = ?", [id, user_id]);
     const [backupTag] = tag;
 
-    res.status(200).json({ data: decorateTag(backupTag) });
+    res.status(200).json({ message: 'Etiqueta eliminada correctamente', data: decorateTag(backupTag) });
   } catch (error) {
     return res.status(500).json({ message: 'Error deleting tag' });
   }

@@ -32,8 +32,27 @@ export const index = async (req, res) => {
   const { id: user_id } = req.user;
 
   try {
-    const [rows] = await db.query("SELECT * FROM categories WHERE user_id = ? ORDER BY name ASC", [user_id]);
-    return res.status(200).json({ data: decorateCategoryList(rows) });
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.per_page) || 10;
+    const offset = (page - 1) * perPage;
+    const [[{ total }]] = await db.query(
+      'SELECT COUNT(*) AS total FROM categories WHERE user_id = ?',
+      [user_id]
+    );
+    const [rows] = await db.query(
+      "SELECT * FROM categories WHERE user_id = ? ORDER BY name ASC LIMIT ? OFFSET ?",
+      [user_id, perPage, offset]
+    );
+
+    res.status(200).json({
+      data: decorateCategoryList(rows),
+      pagination: {
+        total: parseInt(total),
+        per_page: perPage,
+        current_page: page,
+        last_page: Math.ceil(parseInt(total) / perPage)
+      }
+    });
   } catch (error) {
     return res.status(500).json({ message: 'Error listing categories' });
   }
@@ -65,7 +84,7 @@ export const update = async (req, res) => {
     );
     if (existing.length > 0) return res.status(422).json({ message: "Another category with that name already exists for this user." });
 
-    const [result] = await db.query("UPDATE categories SET name = ? WHERE id = ? AND user_id = ?", [name, id, user_id]);
+    const [result] = await db.query("UPDATE categories SET name = ?, updated_at = NOW() WHERE id = ? AND user_id = ?", [name, id, user_id]);
     if (result.affectedRows === 0) return res.status(404).json({ message: 'Category not found or does not belong to user.' });
 
     const updatedCategory = {
@@ -88,12 +107,13 @@ export const destroy = async (req, res) => {
   try {
     const [category] = await db.query('SELECT * FROM categories WHERE id = ? AND user_id = ?', [id, user_id]);
     if (category.length === 0) {
-      return res.status(404).json({ message: 'Category not found' });
+      return res.status(404).json({ message: 'Category not found or does not belong to user.' });
     }
-    await db.query("DELETE FROM categories WHERE id = ? AND user_id = ?", [id, user_id]);
     const [backupCategory] = category;
 
-    res.status(200).json({ data: decorateCategory(backupCategory) });
+    await db.query("DELETE FROM categories WHERE id = ? AND user_id = ?", [id, user_id]);
+
+    res.status(200).json({ message: 'Categoría eliminada correctamente', data: decorateCategory(backupCategory) });
   } catch (error) {
     return res.status(500).json({ message: 'Error deleting category' });
   }
